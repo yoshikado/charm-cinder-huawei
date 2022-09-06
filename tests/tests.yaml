@@ -1,0 +1,9 @@
+charm_name: cinder-huawei
+tests:
+  - tests.tests.CinderHuaweiTest
+configure:
+  - zaza.openstack.charm_tests.keystone.setup.add_demo_user
+gate_bundles:
+  - focal-yoga
+smoke_bundles:
+  - focal-yoga
