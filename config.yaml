@@ -20,3 +20,30 @@ options:
         A common backend name can be set to multiple backends with the
         same characters so that those can be treated as a single virtual
         backend associated with a single volume type.
+  product:
+    type: string
+    default:
+    description: |
+      Type of a storage product. Possible values are 'TV2', 'V3',
+      '18000', or 'Dorado'.
+  rest-url:
+    type: string
+    default:
+    description: |
+      Semicolon(;) separated list of the REST interface. e.g.,
+      https://my-endpoint.example.com:8088/deviceManager/rest/
+  username:
+    type: string
+    default:
+    description: |
+      User name of a storage administrator.
+  password:
+    type: string
+    default:
+    description: |
+      Password of a storage administrator.
+  storage-pool:
+    type: string
+    default:
+    description: |
+      Semicolon(;) separated list of storage pools to be used.

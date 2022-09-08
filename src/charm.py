@@ -15,15 +15,41 @@
 # limitations under the License.
 
 
+# import base64
+import os
+import pwd
+import grp
+
 from ops_openstack.plugins.classes import CinderStoragePluginCharm
 from ops_openstack.core import charm_class, get_charm_class_for_release
 from ops.main import main
 
 
+DRIVER_ISCSI = "cinder.volume.drivers.huawei.huawei_driver.HuaweiISCSIDriver"
+DRIVER_FC = "cinder.volume.drivers.huawei.huawei_driver.HuaweiFCDriver"
+
+
+def makedir(path, owner='root', group='root', mode=0o555):
+    """Create a directory"""
+    uid = pwd.getpwnam(owner).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+    realpath = os.path.abspath(path)
+    os.makedirs(realpath, mode)
+    os.chown(realpath, uid, gid)
+
+
 class CinderCharmBase(CinderStoragePluginCharm):
 
-    PACKAGES = ['cinder-common']
-    MANDATORY_CONFIG = ['protocol']
+    PACKAGES = ['cinder-common', 'sysfsutils']
+    MANDATORY_CONFIG = [
+        'protocol',
+        'product',
+        'username',
+        'password',
+        'storage-pool',
+        'rest-url',
+    ]
+
     # Overriden from the parent. May be set depending on the charm's properties
     stateless = True
     active_active = False
@@ -35,10 +61,36 @@ class CinderCharmBase(CinderStoragePluginCharm):
         # Return the configuration to be set by the principal.
         backend_name = config.get('volume-backend-name',
                                   self.framework.model.app.name)
-        volume_driver = ''
+
+        # Set huawei_conf_file path
+        self.huawei_conf_file = os.path.join(
+            "/etc/cinder",
+            self.framework.model.app.name,
+            "cinder_huawei_conf.xml"
+        )
+
+        # Create dir for huawei storage backend driver
+        makedir(
+            os.path.dirname(self.huawei_conf_file),
+            group="cinder",
+            mode=0o750
+        )
+
+        # Render huawei_conf_file(XML)
+        # TODO
+
+        # Set volume_driver
+        protocol = self.config.get("protocol").lower()
+        if protocol == "iscsi":
+            volume_driver = DRIVER_ISCSI
+        elif protocol == "fc":
+            volume_driver = DRIVER_FC
+
+        # Set all confs
         options = [
             ('volume_driver', volume_driver),
             ('volume_backend_name', backend_name),
+            ("cinder_huawei_conf_file", self.huawei_conf_file)
         ]
 
         if config.get('use-multipath'):

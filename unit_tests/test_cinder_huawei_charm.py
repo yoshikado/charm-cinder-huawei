@@ -16,17 +16,30 @@ import unittest
 from src.charm import CinderCharmBase
 from ops.model import ActiveStatus
 from ops.testing import Harness
+from unittest.mock import patch
 
 
 class TestCinderHuaweiCharm(unittest.TestCase):
 
     def setUp(self):
+        self.makedirs = patch('os.makedirs').start()
+        self.getgrnam = patch('grp.getgrnam').start()
+        self.chown = patch('os.chown').start()
         self.harness = Harness(CinderCharmBase)
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
         self.harness.set_leader(True)
         backend = self.harness.add_relation('storage-backend', 'cinder')
-        self.harness.update_config({'volume-backend-name': 'test'})
+        test_config = {
+            'protocol': 'iscsi',
+            'product': 'Dorado',
+            'username': 'username',
+            'password': 'password',
+            'storage-pool': 'storagepool',
+            'rest-url': 'https://example.com:8088/deviceManager/rest/',
+            'volume-backend-name': 'test'
+        }
+        self.harness.update_config(test_config)
         self.harness.add_relation_unit(backend, 'cinder/0')
 
     def test_cinder_base(self):
@@ -47,5 +60,20 @@ class TestCinderHuaweiCharm(unittest.TestCase):
         self.assertTrue(conf.get('enforce_multipath_for_image_xfer'))
 
     def test_cinder_configuration(self):
-        # Add check here that configuration is as expected.
-        pass
+        test_config = {
+            'protocol': 'iscsi',
+            'product': 'Dorado',
+            'username': 'username',
+            'password': 'password',
+            'storage-pool': 'storagepool',
+            'rest-url': 'https://example.com:8088/deviceManager/rest/',
+            'volume-backend-name': 'test'
+        }
+        config = self.harness.model.config
+
+        self.harness.update_config(test_config)
+
+        self.assertTrue(isinstance(
+            self.harness.model.unit.status, ActiveStatus))
+        for k in test_config:
+            self.assertEqual(test_config[k], config[k])
