@@ -17,28 +17,23 @@
 
 # import base64
 import os
-import pwd
-import grp
+import logging
 
 from ops_openstack.plugins.classes import CinderStoragePluginCharm
-from ops_openstack.core import charm_class, get_charm_class_for_release
 from ops.main import main
+from ops.model import ActiveStatus
+from charmhelpers.core.templating import render
+from charmhelpers.core.host import mkdir
 
 
+logger = logging.getLogger(__name__)
+
+HUAWEI_CNF_FILE = "cinder_huawei_conf.xml"
 DRIVER_ISCSI = "cinder.volume.drivers.huawei.huawei_driver.HuaweiISCSIDriver"
 DRIVER_FC = "cinder.volume.drivers.huawei.huawei_driver.HuaweiFCDriver"
 
 
-def makedir(path, owner='root', group='root', mode=0o555):
-    """Create a directory"""
-    uid = pwd.getpwnam(owner).pw_uid
-    gid = grp.getgrnam(group).gr_gid
-    realpath = os.path.abspath(path)
-    os.makedirs(realpath, mode)
-    os.chown(realpath, uid, gid)
-
-
-class CinderCharmBase(CinderStoragePluginCharm):
+class CinderHuaweiCharm(CinderStoragePluginCharm):
 
     PACKAGES = ['cinder-common', 'sysfsutils']
     MANDATORY_CONFIG = [
@@ -62,35 +57,21 @@ class CinderCharmBase(CinderStoragePluginCharm):
         backend_name = config.get('volume-backend-name',
                                   self.framework.model.app.name)
 
-        # Set huawei_conf_file path
-        self.huawei_conf_file = os.path.join(
-            "/etc/cinder",
-            self.framework.model.app.name,
-            "cinder_huawei_conf.xml"
-        )
-
-        # Create dir for huawei storage backend driver
-        makedir(
-            os.path.dirname(self.huawei_conf_file),
-            group="cinder",
-            mode=0o750
-        )
-
-        # Render huawei_conf_file(XML)
-        # TODO
+        huawei_conf_file = self.create_huawei_conf(config)
 
         # Set volume_driver
-        protocol = self.config.get("protocol").lower()
+        protocol = self.config.get("protocol")
         if protocol == "iscsi":
             volume_driver = DRIVER_ISCSI
         elif protocol == "fc":
             volume_driver = DRIVER_FC
+        logger.debug("Using volume_driver=%s", volume_driver)
 
         # Set all confs
         options = [
             ('volume_driver', volume_driver),
             ('volume_backend_name', backend_name),
-            ("cinder_huawei_conf_file", self.huawei_conf_file)
+            ("cinder_huawei_conf_file", huawei_conf_file)
         ]
 
         if config.get('use-multipath'):
@@ -101,11 +82,46 @@ class CinderCharmBase(CinderStoragePluginCharm):
 
         return options
 
+    def on_config(self, event):
+        config = dict(self.framework.model.config)
+        app_name = self.framework.model.app.name
+        for relation in self.framework.model.relations.get('storage-backend'):
+            self.set_data(relation.data[self.unit], config, app_name)
+        self._stored.is_started = True
+        self.unit.status = ActiveStatus('Unit is ready')
 
-@charm_class
-class CinderHuaweiCharm(CinderCharmBase):
-    release = 'yoga'
+    def get_huawei_context(self, cfg):
+        """Returns a rendered huawer conf file"""
+        huaweicontext = {
+            'protocol': cfg.get('protocol'),
+            'product': cfg.get('product'),
+            'username': cfg.get('username'),
+            'password': cfg.get('password'),
+            'rest_url': cfg.get('rest-url'),
+            'storage_pool': cfg.get('storage-pool'),
+            'luntype': cfg.get('luntype'),
+            'default_targetip': cfg.get('default-targetip'),
+            'initiator_name': cfg.get('initiator-name'),
+            'target_portgroup': cfg.get('target-portgroup')
+        }
+        return huaweicontext
+
+    def create_huawei_conf(self, cfg):
+        # Set huawei_conf_file path
+        huawei_conf_file = os.path.join(
+            "/etc/cinder",
+            self.framework.model.app.name,
+            HUAWEI_CNF_FILE
+        )
+        # Create dir for huawei storage backend driver
+        mkdir(os.path.dirname(huawei_conf_file), group='cinder')
+        # Render huawei_conf_file(XML)
+        render(HUAWEI_CNF_FILE, huawei_conf_file,
+               self.get_huawei_context(cfg),
+               group='cinder',
+               perms=0o644)
+        return huawei_conf_file
 
 
 if __name__ == '__main__':
-    main(get_charm_class_for_release())
+    main(CinderHuaweiCharm)

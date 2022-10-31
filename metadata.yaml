@@ -12,6 +12,7 @@ tags:
   - misc
 series:
   - focal
+  - jammy
 subordinate: true
 provides:
   storage-backend:

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Configuration file maintained by Juju. Local changes may be overwritten. -->
+<config>
+    <Storage>
+        <Product>{{ product }}</Product>
+        <UserName>{{ username }}</UserName>
+        <UserPassword>{{ password }}</UserPassword>
+        <RestURL>{{ rest_url }}</RestURL>
+    </Storage>
+    <LUN>
+        <LUNType>{{ luntype }}</LUNType>
+        <StoragePool>{{ storage_pool }}</StoragePool>
+    </LUN>
+    {% if protocol == "iscsi" %}
+    <iSCSI>
+        {% if default_targetip != '' -%}
+        <DefaultTargetIP>{{ default_targetip }}</DefaultTargetIP>
+        {% endif %}
+        {% if initiator_name != '' -%}
+        {% set initiators = initiator_name.split(';') %}
+        {% for initiator in initiators -%}
+        <Initiator Name="{{ initiator }}" TargetPortGroup="{{ target_portgroup }}" />
+        {% endfor %}
+        {% endif %}
+    </iSCSI>
+    {% endif %}
+</config>

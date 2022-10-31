@@ -8,7 +8,7 @@ options:
       "use-multipath" option in the nova-compute charm.
   protocol:
     type: string
-    default:
+    default: iscsi
     description: |
       SAN protocol to use. Choose between iscsi or fc.
   volume-backend-name:
@@ -47,3 +47,26 @@ options:
     default:
     description: |
       Semicolon(;) separated list of storage pools to be used.
+  luntype:
+    type: string
+    default: Thin 
+    description: |
+      Type of the LUNs to be created. The value can be Thick or Thin. Dorado series 
+      only support Thin LUNs.
+  default-targetip:
+    type: string
+    default: 
+    description: |
+      Default IP address of the iSCSI target that is provided for compute nodes.
+  initiator-name:
+    type: string
+    default: ''
+    description: |
+      List of iSCSI initiators names, separated by the semicolons. Can be acquired
+      from the /etc/iscsi/initiatorname.iscsi on the compute host.
+  target-portgroup:
+    type: string
+    default:
+    description: |
+      Port Group name on the storage array side. This has to be configured
+      in order to use the iSCSI multipathing.
