@@ -1,6 +1,6 @@
-series: focal
+series: jammy
 variables:
-  openstack-origin: &openstack-origin cloud:focal-yoga
+  openstack-origin: &openstack-origin distro
 comment:
 - 'machines section to decide order of deployment. database sooner = faster'
 machines:
@@ -24,9 +24,9 @@ applications:
     options:
       source: *openstack-origin
     to:
-    - '0'
-    - '1'
-    - '2'
+      - '0'
+      - '1'
+      - '2'
   rabbitmq-server:
     charm: ch:rabbitmq-server
     channel: latest/edge
@@ -42,7 +42,7 @@ applications:
     options:
       openstack-origin: *openstack-origin
     to:
-    - '4'
+      - '4'
   keystone-mysql-router:
     channel: latest/edge
     charm: ch:mysql-router
@@ -57,7 +57,7 @@ applications:
       block-device: None
       overwrite: "true"
     to:
-    - '5'
+      - '5'
   cinder-huawei:
     charm: ../../cinder-huawei.charm
     options:
