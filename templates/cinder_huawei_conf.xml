@@ -24,4 +24,14 @@
         {% endif %}
     </iSCSI>
     {% endif %}
+    {% if protocol == "fc" %}
+    <FC>
+        {% if fc_hostname != '' -%}
+        {% set hostnames = fc_hostname.split(';') %}
+        {% for hostname in hostnames -%}
+        <Initiator HostName="{{ hostname }}" ALUA="{{ alua }}" FAILOVERMODE="{{ failovermode }}" PATHTYPE="{{ pathtype }}"/>
+        {% endfor %}
+        {% endif %}
+    </FC>
+    {% endif %}
 </config>

@@ -70,3 +70,34 @@ options:
     description: |
       Port Group name on the storage array side. This has to be configured
       in order to use the iSCSI multipathing.
+  fc-hostname:
+    type: string
+    default:
+    description: |
+      List of FC initiators host names, separated by the semicolons.
+      Use regular expression for every Nova or Cinder node's host names, 
+      for example, "cinder-[0-9]" or "compute.*"
+  alua:
+    type: int
+    default: 1
+    description: |
+        0: Huawei UltraPath
+        1: third-party multipathing software
+  failover-mode:
+    type: int
+    default: 1
+    description: |
+        Initiator switchover mode.
+        This parameter needs to be delivered only when third-party multipathing software is used.
+        0: early-version ALUA
+        1: common ALUA
+        2: ALUA not used
+        3: special mode
+  path-type:
+    type: int
+    default: 0
+    description: |
+        Initiator path type.
+        This parameter needs to be delivered only when third-party multipathing software is used.
+        0: optimized path
+        1: non-optimized path
