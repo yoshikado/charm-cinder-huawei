@@ -1,4 +1,4 @@
-name: cinder-huawei
+name: fe-staging-cinder-huawei
 summary: Huawei integration for OpenStack Block Storage
 maintainer: OpenStack Charmers <openstack-charmers@lists.ubuntu.com>
 description: |

@@ -4,5 +4,5 @@
       - charm-unit-jobs-py39
     vars:
       needs_charm_build: true
-      charm_build_name: cinder-huawei
+      charm_build_name: fe-staging-cinder-huawei
       build_type: charmcraft

@@ -37,7 +37,7 @@ class TestCinderHuaweiCharm(unittest.TestCase):
     def test_cinder_base(self):
         self.assertEqual(
             self.harness.framework.model.app.name,
-            'cinder-huawei')
+            'fe-staging-cinder-huawei')
         # Test that charm is blocked because of missing configurations.
         self.harness.update_config({})
         self.assertTrue(isinstance(

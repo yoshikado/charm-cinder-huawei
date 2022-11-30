@@ -59,7 +59,7 @@ applications:
     to:
     - '5'
   cinder-huawei:
-    charm: ../../cinder-huawei.charm
+    charm: ../../fe-staging-cinder-huawei.charm
     options:
       product: "Dorado"
       username: "username"
