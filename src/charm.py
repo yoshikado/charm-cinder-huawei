@@ -118,11 +118,11 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
             HUAWEI_CNF_FILE
         )
         # Create dir for huawei storage backend driver
-        mkdir(os.path.dirname(huawei_conf_file), group='cinder')
+        mkdir(os.path.dirname(huawei_conf_file), owner='cinder')
         # Render huawei_conf_file(XML)
         render(HUAWEI_CNF_FILE, huawei_conf_file,
                self.get_huawei_context(cfg),
-               group='cinder',
+               owner='cinder',
                perms=0o644)
         return huawei_conf_file
 
