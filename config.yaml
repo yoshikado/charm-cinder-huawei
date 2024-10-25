@@ -1,11 +1,10 @@
 options:
-  use-multipath:
-    type: boolean
-    default: True
+  product:
+    type: string
+    default:
     description: |
-      Whether to use a multipath connection for iSCSI or FC in Cinder
-      volume service. Enabling multipath for VMs is managed by the
-      "use-multipath" option in the nova-compute charm.
+      Type of a storage product. Possible values are 'TV2', 'V3',
+      '18000', or 'Dorado'.
   protocol:
     type: string
     default: iscsi
@@ -20,70 +19,77 @@ options:
         A common backend name can be set to multiple backends with the
         same characters so that those can be treated as a single virtual
         backend associated with a single volume type.
-  product:
-    type: string
-    default:
-    description: |
-      Type of a storage product. Possible values are 'TV2', 'V3',
-      '18000', or 'Dorado'.
-  rest-url:
-    type: string
-    default:
-    description: |
-      Semicolon(;) separated list of the REST interface. e.g.,
-      https://my-endpoint.example.com:8088/deviceManager/rest/
   username:
     type: string
     default:
     description: |
       User name of a storage administrator.
-  password:
+  userpassword:
     type: string
     default:
     description: |
       Password of a storage administrator.
-  storage-pool:
+  resturl:
     type: string
     default:
     description: |
-      Semicolon(;) separated list of storage pools to be used.
+      Semicolon(;) separated list of the REST interface. e.g.,
+      https://my-endpoint.example.com:8088/deviceManager/rest/
   luntype:
     type: string
-    default: Thin 
+    default: Thin
     description: |
-      Type of the LUNs to be created. The value can be Thick or Thin. Dorado series 
+      Type of the LUNs to be created. The value can be Thick or Thin. Dorado series
       only support Thin LUNs.
-  default-targetip:
+  storagepool:
     type: string
-    default: 
+    default:
+    description: |
+      Name of a storage pool to be used. Multiple pools are allowed,
+      separated by the semicolons (;).
+  iscsidefaulttargetip:
+    type: string
+    default:
     description: |
       Default IP address of the iSCSI target that is provided for compute nodes.
-  initiator-name:
+  iscsiinitiators:
     type: string
     default: ''
     description: |
       List of iSCSI initiators names, separated by the semicolons. Can be acquired
       from the /etc/iscsi/initiatorname.iscsi on the compute host.
-  target-portgroup:
+  iscsiportgroupname:
     type: string
     default:
     description: |
       Port Group name on the storage array side. This has to be configured
       in order to use the iSCSI multipathing.
-  fc-hostname:
-    type: string
-    default:
+  luncopyspeed:
+    type: int
+    default: 3
     description: |
-      List of FC initiators host names, separated by the semicolons.
-      Use regular expression for every Nova or Cinder node's host names, 
-      for example, "cinder-[0-9]" or "compute.*"
+        LUN copy speed.
+        The value can be 1 (low speed), 2 (mediumspeed), 3 (high speed), or 4 (highest speed)
+  lunclonemode:
+    type: string
+    default: fastclone
+    description: |
+        LUN clone mode. The value can be fastclone or luncopy.
+        Only Dorado supports fastclone. Dorado V300R001C20 and later versions support luncopy.
+        Other storage devicessupport only luncopy
+  hypersyncspeed:
+    type: int
+    default: 3
+    description: |
+        HyperMetro pair synchronization speed.
+        The value can be 1 (low speed), 2 (mediumspeed), 3 (high speed), or 4 (highest speed).
   alua:
     type: int
     default: 1
     description: |
         0: Huawei UltraPath
         1: third-party multipathing software
-  failover-mode:
+  failovermode:
     type: int
     default: 1
     description: |
@@ -92,12 +98,47 @@ options:
         0: early-version ALUA
         1: common ALUA
         2: ALUA not used
-        3: special mode
-  path-type:
+        3: special ALUA
+  pathtype:
     type: int
     default: 0
     description: |
         Initiator path type.
         This parameter needs to be delivered only when third-party multipathing software is used.
-        0: optimized path
-        1: non-optimized path
+        0: optimal path
+        1: non-optimal path
+  hypermetro:
+    type: boolean
+    default: False
+    description: |
+      This parameter describes, whether the HyperMetro sync is enabled on the driver side or not.
+      Prior to enabling this option in the charm, the HyperMetro domain should be configured
+      on the storage array side.
+  fchostname:
+    type: string
+    default:
+    description: |
+      Regular expression of the Nova or Cinder node host name
+      "Host[0-9]" or "*" or "compute.*" for example
+  vstorename:
+    type: string
+    default: store
+    description: |
+      Vstore name
+  metrodomain:
+    type: string
+    default: domain
+    description: |
+      Hypermetro domain name
+  use-multipath-for-image-xfer:
+    type: boolean
+    default: true
+    description: |
+      Determines, whether a volume attach/detach in cinder will happen using multipath
+      for volume to image and image to volume transfers.
+  enforce-multipath-image-xfer:
+    type: boolean
+    default: true
+    description: |
+      If this is set to True, attachment of volumes for image transfer will be
+      aborted, when multipathd is not  running. Otherwise, it will fallback to single path.

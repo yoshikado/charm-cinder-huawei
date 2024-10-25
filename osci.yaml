@@ -1,8 +1,8 @@
 - project:
     templates:
-      - charm-unit-jobs-py38
-      - charm-unit-jobs-py39
+      - charm-unit-jobs-py310
+      - charm-functional-jobs
     vars:
       needs_charm_build: true
-      charm_build_name: fe-staging-cinder-huawei
+      charm_build_name: cinder-huawei
       build_type: charmcraft

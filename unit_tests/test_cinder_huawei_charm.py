@@ -21,7 +21,7 @@ from ops.model import (
 from ops.testing import Harness
 from unittest.mock import patch
 
-TEST_XML_PATH = "/etc/cinder/cinder-huawei/cinder_huawei_conf.xml"
+TEST_XML_PATH = "/etc/cinder/cinder-huawei/huawei.xml"
 
 
 class TestCinderHuaweiCharm(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestCinderHuaweiCharm(unittest.TestCase):
     def test_cinder_base(self):
         self.assertEqual(
             self.harness.framework.model.app.name,
-            'fe-staging-cinder-huawei')
+            'cinder-huawei')
         # Test that charm is blocked because of missing configurations.
         self.harness.update_config({})
         self.assertTrue(isinstance(
@@ -45,7 +45,8 @@ class TestCinderHuaweiCharm(unittest.TestCase):
 
     @patch.object(CinderHuaweiCharm, 'create_huawei_conf')
     def test_multipath_config(self, mock_create_huawei_conf):
-        self.harness.update_config({'use-multipath': True})
+        self.harness.update_config({'use-multipath-for-image-xfer': True})
+        self.harness.update_config({'enforce-multipath-image-xfer': True})
         mock_create_huawei_conf.return_value = TEST_XML_PATH
         conf = dict(self.harness.charm.cinder_configuration(
             dict(self.harness.model.config)))
@@ -59,9 +60,9 @@ class TestCinderHuaweiCharm(unittest.TestCase):
             'protocol': 'iscsi',
             'product': 'Dorado',
             'username': 'myuser',
-            'password': 'mypassword',
-            'storage-pool': 'mystoragepool',
-            'rest-url': 'https://example.com:8088/deviceManager/rest/',
+            'userpassword': 'mypassword',
+            'storagepool': 'mystoragepool',
+            'resturl': 'https://example.com:8088/deviceManager/rest/',
             'volume-backend-name': 'huawei_dorado_iscsi',
         }
         self.harness.model.config
@@ -87,9 +88,9 @@ class TestCinderHuaweiCharm(unittest.TestCase):
             'protocol': 'fc',
             'product': 'Dorado',
             'username': 'myuser',
-            'password': 'mypassword',
-            'storage-pool': 'mystoragepool',
-            'rest-url': 'https://example.com:8088/deviceManager/rest/',
+            'userpassword': 'mypassword',
+            'storagepool': 'mystoragepool',
+            'resturl': 'https://example.com:8088/deviceManager/rest/',
             'volume-backend-name': 'huawei_dorado_fc',
         }
         self.harness.model.config

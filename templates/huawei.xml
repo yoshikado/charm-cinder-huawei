@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{% set protocol = protocol.lower() -%}
+<config>
+    <Storage>
+        <Product>{{ product }}</Product>
+        <Protocol>{{ protocol }}</Protocol>
+        <UserName>{{ username | trim }}</UserName>
+        <UserPassword>{{ userpassword | trim }}</UserPassword>
+        <RestURL>{{ resturl }}</RestURL>
+    </Storage>
+    <LUN>
+        <LUNType>{{ luntype }}</LUNType>
+        <StoragePool>{{ storagepool }}</StoragePool>
+        {% if protocol == "fc" -%}
+        <LUNCopySpeed>{{ luncopyspeed }}</LUNCopySpeed>
+        <LUNCloneMode>{{ lunclonemode }}</LUNCloneMode>
+        <HyperSyncSpeed>{{ hypersyncspeed }}</HyperSyncSpeed>
+        {%- endif %}
+    </LUN>
+    {% if protocol == "iscsi" -%}
+    <iSCSI>
+        {% if iscsidefaulttargetip -%}
+        <DefaultTargetIP>{{ iscsidefaulttargetip }}</DefaultTargetIP>
+        {%- endif %}
+        {% if iscsiinitiators != '' -%}
+        {% set initiators = iscsiinitiators.split(';') -%}
+        {% for initiator in initiators -%}
+        <Initiator Name="{{ initiator }}" TargetPortGroup="{{ iscsiportgroupname }}" />
+        {% endfor %}
+        {%- endif %}
+    </iSCSI>
+    {%- endif %}
+    {% if protocol == "fc" -%}
+    <FC>
+        <Initiator HostName="{{ fchostname }}" ALUA="{{ alua }}" FAILOVERMODE="{{ failovermode }}" PATHTYPE="{{ pathtype }}"/>
+    </FC>
+    {%- endif %}
+</config>

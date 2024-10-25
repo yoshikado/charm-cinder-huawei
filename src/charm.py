@@ -1,18 +1,8 @@
-#! /usr/bin/env python3
-
-# Copyright 2021 Canonical Ltd
+#!/usr/bin/env python3
+# Copyright 2021 OpenStack Charmers
+# See LICENSE file for licensing details.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#  http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Learn more at: https://juju.is/docs/sdk
 
 
 # import base64
@@ -28,9 +18,13 @@ from charmhelpers.core.host import mkdir
 
 logger = logging.getLogger(__name__)
 
-HUAWEI_CNF_FILE = "cinder_huawei_conf.xml"
+HUAWEI_CNF_FILE = "huawei.xml"
 DRIVER_ISCSI = "cinder.volume.drivers.huawei.huawei_driver.HuaweiISCSIDriver"
 DRIVER_FC = "cinder.volume.drivers.huawei.huawei_driver.HuaweiFCDriver"
+
+
+class ProtocolNotImplemented(Exception):
+    """Unsupported protocol error."""
 
 
 class CinderHuaweiCharm(CinderStoragePluginCharm):
@@ -40,9 +34,9 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
         'protocol',
         'product',
         'username',
-        'password',
-        'storage-pool',
-        'rest-url',
+        'userpassword',
+        'storagepool',
+        'resturl',
     ]
 
     # Overriden from the parent. May be set depending on the charm's properties
@@ -60,25 +54,60 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
         huawei_conf_file = self.create_huawei_conf(config)
 
         # Set volume_driver
-        protocol = self.config.get("protocol")
+        protocol = config.get("protocol").lower()
         if protocol == "iscsi":
             volume_driver = DRIVER_ISCSI
         elif protocol == "fc":
             volume_driver = DRIVER_FC
+        else:
+            raise ProtocolNotImplemented(
+                "{0} is not an implemented protocol. Please, choose between "
+                "`iscsi` and `fc`.".format(protocol)
+            )
         logger.debug("Using volume_driver=%s", volume_driver)
+
+        # set multipath
+        use_mpath_img_xfer = config.get('use-multipath-for-image-xfer')
+        enforce_multipath = config.get('enforce-multipath-image-xfer')
 
         # Set all confs
         options = [
             ('volume_driver', volume_driver),
             ('volume_backend_name', backend_name),
-            ("cinder_huawei_conf_file", huawei_conf_file)
+            ("cinder_huawei_conf_file", huawei_conf_file),
+            ('use_multipath_for_image_xfer', use_mpath_img_xfer),
+            ('enforce_multipath_for_image_xfer', enforce_multipath)
         ]
 
-        if config.get('use-multipath'):
-            options.extend([
-                ('use_multipath_for_image_xfer', True),
-                ('enforce_multipath_for_image_xfer', True)
-            ])
+        if config.get('hypermetro'):
+            config_keys = [
+                'storagepool', 'resturl', 'username', 'userpassword',
+                'vstorename', 'metrodomain'
+            ]
+            for k in config_keys:
+                if not config.get(k):
+                    raise ProtocolNotImplemented(
+                        "HyperMetro init error: {0} option is required".format(
+                            k
+                        )
+                    )
+            hypermetro_options = ('''storage_pool:{0},
+            san_address:{1},
+            san_user:{2},
+            san_password:{3},
+            vstore_name:{4},
+            metro_domain:{5},
+            metro_sync_completed:True,
+            fc_info:'{{'HostName:xxx;ALUA:1;FAILOVERMODE:1;PATHTYPE:0'}}'
+            ''').format(
+                config.get('storagepool'),
+                config.get('resturl'),
+                config.get('username'),
+                config.get('userpassword'),
+                config.get('vstorename'),
+                config.get('metrodomain')
+            )
+            options.append(('hypermetro_device', hypermetro_options))
 
         return options
 
@@ -96,17 +125,20 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
             'protocol': cfg.get('protocol'),
             'product': cfg.get('product'),
             'username': cfg.get('username'),
-            'password': cfg.get('password'),
-            'rest_url': cfg.get('rest-url'),
-            'storage_pool': cfg.get('storage-pool'),
+            'userpassword': cfg.get('userpassword'),
+            'resturl': cfg.get('resturl'),
+            'storagepool': cfg.get('storagepool'),
             'luntype': cfg.get('luntype'),
-            'default_targetip': cfg.get('default-targetip'),
-            'initiator_name': cfg.get('initiator-name'),
-            'target_portgroup': cfg.get('target-portgroup'),
-            'fc_hostname': cfg.get('fc-hostname'),
+            'luncopyspeed': cfg.get('luncopyspeed'),
+            'lunclonemode': cfg.get('lunclonemode'),
+            'hypersyncspeed': cfg.get('hypersyncspeed'),
+            'iscsidefaulttargetip': cfg.get('iscsidefaulttargetip'),
+            'iscsiinitiators': cfg.get('iscsiinitiators'),
+            'iscsiportgroupname': cfg.get('iscsiportgroupname'),
+            'fchostname': cfg.get('fchostname'),
             'alua': cfg.get('alua'),
-            'failovermode': cfg.get('failover-mode'),
-            'pathtype': cfg.get('path-type')
+            'failovermode': cfg.get('failovermode'),
+            'pathtype': cfg.get('pathtype')
         }
         return huaweicontext
 
