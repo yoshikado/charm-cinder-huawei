@@ -34,9 +34,9 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
         'protocol',
         'product',
         'username',
-        'userpassword',
-        'storagepool',
-        'resturl',
+        'password',
+        'storage-pool',
+        'rest-url',
     ]
 
     # Overriden from the parent. May be set depending on the charm's properties
@@ -66,48 +66,18 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
             )
         logger.debug("Using volume_driver=%s", volume_driver)
 
-        # set multipath
-        use_mpath_img_xfer = config.get('use-multipath-for-image-xfer')
-        enforce_multipath = config.get('enforce-multipath-image-xfer')
-
         # Set all confs
         options = [
             ('volume_driver', volume_driver),
             ('volume_backend_name', backend_name),
-            ("cinder_huawei_conf_file", huawei_conf_file),
-            ('use_multipath_for_image_xfer', use_mpath_img_xfer),
-            ('enforce_multipath_for_image_xfer', enforce_multipath)
+            ("cinder_huawei_conf_file", huawei_conf_file)
         ]
 
-        if config.get('hypermetro'):
-            config_keys = [
-                'storagepool', 'resturl', 'username', 'userpassword',
-                'vstorename', 'metrodomain'
-            ]
-            for k in config_keys:
-                if not config.get(k):
-                    raise ProtocolNotImplemented(
-                        "HyperMetro init error: {0} option is required".format(
-                            k
-                        )
-                    )
-            hypermetro_options = ('''storage_pool:{0},
-            san_address:{1},
-            san_user:{2},
-            san_password:{3},
-            vstore_name:{4},
-            metro_domain:{5},
-            metro_sync_completed:True,
-            fc_info:'{{'HostName:xxx;ALUA:1;FAILOVERMODE:1;PATHTYPE:0'}}'
-            ''').format(
-                config.get('storagepool'),
-                config.get('resturl'),
-                config.get('username'),
-                config.get('userpassword'),
-                config.get('vstorename'),
-                config.get('metrodomain')
-            )
-            options.append(('hypermetro_device', hypermetro_options))
+        if config.get('use-multipath'):
+            options.extend([
+                ('use_multipath_for_image_xfer', True),
+                ('enforce_multipath_for_image_xfer', True)
+            ])
 
         return options
 
@@ -125,20 +95,17 @@ class CinderHuaweiCharm(CinderStoragePluginCharm):
             'protocol': cfg.get('protocol'),
             'product': cfg.get('product'),
             'username': cfg.get('username'),
-            'userpassword': cfg.get('userpassword'),
-            'resturl': cfg.get('resturl'),
-            'storagepool': cfg.get('storagepool'),
+            'password': cfg.get('password'),
+            'rest_url': cfg.get('rest-url'),
+            'storage_pool': cfg.get('storage-pool'),
             'luntype': cfg.get('luntype'),
-            'luncopyspeed': cfg.get('luncopyspeed'),
-            'lunclonemode': cfg.get('lunclonemode'),
-            'hypersyncspeed': cfg.get('hypersyncspeed'),
-            'iscsidefaulttargetip': cfg.get('iscsidefaulttargetip'),
-            'iscsiinitiators': cfg.get('iscsiinitiators'),
-            'iscsiportgroupname': cfg.get('iscsiportgroupname'),
-            'fchostname': cfg.get('fchostname'),
+            'default_targetip': cfg.get('default-targetip'),
+            'initiator_name': cfg.get('initiator-name'),
+            'target_portgroup': cfg.get('target-portgroup'),
+            'fc_hostname': cfg.get('fc-hostname'),
             'alua': cfg.get('alua'),
-            'failovermode': cfg.get('failovermode'),
-            'pathtype': cfg.get('pathtype')
+            'failovermode': cfg.get('failover-mode'),
+            'pathtype': cfg.get('path-type')
         }
         return huaweicontext
 

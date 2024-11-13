@@ -5,34 +5,29 @@
         <Product>{{ product }}</Product>
         <Protocol>{{ protocol }}</Protocol>
         <UserName>{{ username | trim }}</UserName>
-        <UserPassword>{{ userpassword | trim }}</UserPassword>
-        <RestURL>{{ resturl }}</RestURL>
+        <UserPassword>{{ password | trim }}</UserPassword>
+        <RestURL>{{ rest_url }}</RestURL>
     </Storage>
     <LUN>
         <LUNType>{{ luntype }}</LUNType>
-        <StoragePool>{{ storagepool }}</StoragePool>
-        {% if protocol == "fc" -%}
-        <LUNCopySpeed>{{ luncopyspeed }}</LUNCopySpeed>
-        <LUNCloneMode>{{ lunclonemode }}</LUNCloneMode>
-        <HyperSyncSpeed>{{ hypersyncspeed }}</HyperSyncSpeed>
-        {%- endif %}
+        <StoragePool>{{ storage_pool }}</StoragePool>
     </LUN>
     {% if protocol == "iscsi" -%}
     <iSCSI>
-        {% if iscsidefaulttargetip -%}
-        <DefaultTargetIP>{{ iscsidefaulttargetip }}</DefaultTargetIP>
+        {% if default_targetip -%}
+        <DefaultTargetIP>{{ default_targetip }}</DefaultTargetIP>
         {%- endif %}
-        {% if iscsiinitiators != '' -%}
-        {% set initiators = iscsiinitiators.split(';') -%}
+        {% if initiator_name != '' -%}
+        {% set initiators = initiator_name.split(';') -%}
         {% for initiator in initiators -%}
-        <Initiator Name="{{ initiator }}" TargetPortGroup="{{ iscsiportgroupname }}" />
+        <Initiator Name="{{ initiator }}" TargetPortGroup="{{ target_portgroup }}" />
         {% endfor %}
         {%- endif %}
     </iSCSI>
     {%- endif %}
     {% if protocol == "fc" -%}
     <FC>
-        <Initiator HostName="{{ fchostname }}" ALUA="{{ alua }}" FAILOVERMODE="{{ failovermode }}" PATHTYPE="{{ pathtype }}"/>
+        <Initiator HostName="{{ fc_hostname }}" ALUA="{{ alua }}" FAILOVERMODE="{{ failovermode }}" PATHTYPE="{{ pathtype }}"/>
     </FC>
     {%- endif %}
 </config>
